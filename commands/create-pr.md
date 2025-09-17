@@ -1,67 +1,157 @@
 # Generate PR Description
 
-You are tasked with generating a comprehensive pull request description following the repository's standard template.
+Creates comprehensive pull request descriptions using repository templates or best practices.
 
-## Steps to follow:
+## Workflow
 
-1. **Read the PR description template:**
+### 1. Identify Target PR
 
-   - First, check if `.github/pull_request_template.md` exists
-   - Read the template carefully to understand all sections and requirements
+```bash
+# Check current branch for PR
+gh pr view --json number,title,state 2>/dev/null
 
-2. **Identify the PR to describe:**
+# If no PR on current branch, list available
+gh pr list --limit 10 --json number,title,headRefName,author
+```
 
-   - Check if the current branch has an associated PR: `gh pr view --json url,number,title,state 2>/dev/null`
-   - If no PR exists for the current branch, or if on main/master, list open PRs: `gh pr list --limit 10 --json number,title,headRefName,author`
-   - Ask the user which PR they want to describe
+Ask user which PR to describe if multiple options exist.
 
-3. **Gather comprehensive PR information:**
+### 2. Gather PR Context
 
-   - Get the full PR diff: `gh pr diff {number}`
-   - If you get an error about no default remote repository, instruct the user to run `gh repo set-default` and select the appropriate repository
-   - Get commit history: `gh pr view {number} --json commits`
-   - Review the base branch: `gh pr view {number} --json baseRefName`
-   - Get PR metadata: `gh pr view {number} --json url,title,number,state`
+```bash
+# Get PR metadata
+gh pr view {number} --json url,title,baseRefName,headRefName
 
-4. **Analyze the changes thoroughly:** (think deeply about the code changes, their architectural implications, and potential impacts)
+# Get changes
+gh pr diff {number}
 
-   - Read through the entire diff carefully
-   - For context, read any files that are referenced but not shown in the diff
-   - Understand the purpose and impact of each change
-   - Identify user-facing changes vs internal implementation details
-   - Look for breaking changes or migration requirements
+# Get commit history
+gh pr view {number} --json commits
+```
 
-5. **Handle verification requirements:**
+**If repository not set:** User must run `gh repo set-default`
 
-   - Look for any checklist items in the "How to verify it" section of the template
-   - For each verification step:
-     - If it's a command you can run (like `just test`, `just check`, etc.), run it
-     - If it passes, mark the checkbox as checked: `- [x]`
-     - If it fails, keep it unchecked and note what failed: `- [ ]` with explanation
-     - If it requires manual testing (UI interactions, external services), leave unchecked and note for user
-   - Document any verification steps you couldn't complete
+### 3. Analyze Changes
 
-6. **Generate the description:**
+- Read the complete diff
+- Identify change categories:
+  - Features added
+  - Bugs fixed
+  - Breaking changes
+  - Performance improvements
+  - Refactoring
+- Note user-facing vs internal changes
+- Check for migration requirements
 
-   - Fill out each section from the template thoroughly:
-     - Answer each question/section based on your analysis
-     - Be specific about problems solved and changes made
-     - Focus on user impact where relevant
-     - Include technical details in appropriate sections
-     - Write a concise changelog entry
-   - Ensure all checklist items are addressed (checked or explained)
+### 4. Load Template (if exists)
 
-7. **Update the PR:**
-   - Update the PR description directly: `gh pr edit {number} --body-file thoughts/shared/prs/{number}_description.md`
-   - Confirm the update was successful
-   - If any verification steps remain unchecked, remind the user to complete them before merging
+```bash
+# Check for PR template
+cat .github/pull_request_template.md 2>/dev/null
+```
 
-## Important notes:
+### 5. Generate Description
 
-- This command works across different repositories - always read the local template
-- Be thorough but concise - descriptions should be scannable
-- Focus on the "why" as much as the "what"
-- Include any breaking changes or migration notes prominently
-- If the PR touches multiple components, organize the description accordingly
-- Always attempt to run verification commands when possible
-- Clearly communicate which verification steps need manual testing
+**With Template:** Fill each section based on analysis
+**Without Template:** Use standard format:
+
+```markdown
+## Summary
+
+[What problem does this solve? Why was this change needed?]
+
+## Changes
+
+- [Primary change with impact]
+- [Secondary changes]
+
+## Type of Change
+
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+
+- [ ] Tests pass locally
+- [ ] Added tests for new functionality
+- [ ] Existing tests updated
+
+## Breaking Changes
+
+[List any breaking changes or "None"]
+
+## Screenshots
+
+[If UI changes, add before/after or "N/A"]
+
+## Additional Notes
+
+[Context, decisions, or follow-up needed]
+```
+
+### 6. Run Verification (if possible)
+
+```bash
+# Common verification commands
+npm test
+cargo test
+go test ./...
+pytest
+make test
+just test
+```
+
+Mark completed checks: `- [x]`  
+Leave manual tests unchecked: `- [ ] Manual UI testing required`
+
+### 7. Update PR
+
+```bash
+# Save description
+echo "[description]" > pr_description.md
+
+# Update PR
+gh pr edit {number} --body-file pr_description.md
+
+# Confirm update
+gh pr view {number}
+```
+
+## Key Principles
+
+**DO:**
+
+- ✅ Focus on WHY changes were made
+- ✅ Highlight user impact first
+- ✅ Group related changes
+- ✅ Run automated tests when possible
+- ✅ Note migration steps clearly
+
+**DON'T:**
+
+- ❌ List every file changed
+- ❌ Duplicate commit messages
+- ❌ Skip breaking change warnings
+- ❌ Leave template sections empty
+- ❌ Include "Generated by Claude" or similar attribution
+
+## Repository Variations
+
+| Template Location                  | Fallback Order      |
+| ---------------------------------- | ------------------- |
+| `.github/pull_request_template.md` | Primary             |
+| `.github/PULL_REQUEST_TEMPLATE.md` | Alternative         |
+| `docs/pull_request_template.md`    | Legacy              |
+| None found                         | Use standard format |
+
+## Common Sections to Address
+
+- **Problem/Solution** - What issue does this resolve?
+- **Implementation** - How was it solved?
+- **Testing** - How was it verified?
+- **Impact** - Who/what is affected?
+- **Follow-up** - What comes next?
+
+Remember: Good PR descriptions accelerate reviews. Be thorough but scannable.
