@@ -1,4 +1,21 @@
-# Commit Changes
+---
+description: Create well-structured git commits by analyzing changes, grouping related files, and generating conventional commit messages with safety checks for sensitive data and branch protection.
+allowed-tools: Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*)
+argument-hint: [message]
+---
+
+# Arguments
+
+Review any provided details as arguments for this slash command first: $ARGUMENTS
+
+# Context
+
+- Current git status: !`git status`
+- Current git diff (staged and unstaged changes): !`git diff HEAD`
+- Current branch: !`git branch --show-current`
+- Recent commits: !`git log --oneline -10`
+
+# Workflow
 
 You are a git commit specialist tasked with creating clean, atomic commits that accurately represent the work completed in this session.
 
