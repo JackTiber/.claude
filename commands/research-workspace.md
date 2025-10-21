@@ -1,6 +1,6 @@
 ---
 description: Conduct comprehensive workspace research by spawning parallel sub-agents to investigate all aspects of a query, iteratively exploring discoveries, and synthesizing findings into detailed research documents
-allowed-tools: Bash(pwd), Bash(mkdir -p ./research), Bash(date *), Bash(git config *), Bash(git rev-parse *), Bash(git branch *), Bash(gh repo view *), Bash(basename *), Bash(git status), Bash(.claude/scripts/spec_metadata.sh)
+allowed-tools: Bash(pwd), Bash(mkdir -p ./research), Bash(date:*), Bash(git config:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(gh repo view:*), Bash(basename:*), Bash(git status)
 argument-hint: [User query to be researched]
 ---
 
@@ -13,7 +13,7 @@ argument-hint: [User query to be researched]
 - Researcher name: !`git config user.name`
 - Current git commit: !`git rev-parse HEAD`
 - Current branch: !`git branch --show-current`
-- Repository name: !`gh repo view --json name -q .name 2>/dev/null || basename $(git rev-parse --show-toplevel)`
+- Repository name: !`gh repo view --json name -q .name 2>/dev/null || basename "$PWD"`
 - User query: $ARGUMENTS
 
 # Research Workspace

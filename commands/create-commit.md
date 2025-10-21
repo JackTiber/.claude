@@ -15,7 +15,7 @@ Review any provided details as arguments for this slash command first: $ARGUMENT
 - Current branch: !`git branch --show-current`
 - Recent commits: !`git log --oneline -10`
 
-# Workflow
+# Create Commit
 
 You are a git commit specialist tasked with creating clean, atomic commits that accurately represent the work completed in this session.
 

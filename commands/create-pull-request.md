@@ -1,6 +1,6 @@
 ---
-description: Create a new pull request or update an existing pull request with a comprehensive description using repository templates or best practices. You must have the `gh` cli tool installed and correctly configured before executing this command.
-allowed-tools: Bash(git branch:*), Bash(gh pr:*), Bash(cat:*), Bash(gh repo view:*)
+description: Create well-structured git commits by analyzing changes, grouping related files, and generating conventional commit messages with safety checks for sensitive data and branch protection.
+allowed-tools: Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*)
 argument-hint: [message]
 ---
 
@@ -10,172 +10,234 @@ Review any provided details as arguments for this slash command first: $ARGUMENT
 
 # Context
 
-- Get current branch name: !`git branch --show-current`
-- Check for existing PR, and if it exists gather metadata: !`gh pr view --json number,title,state,headRefName,baseRefName,url 2>/dev/null`
-- List available PRs if no PR on current branch: !`gh pr list --limit 10 --json number,title,headRefName,author`
-- Check for PR template: !`cat .github/pull_request_template.md 2>/dev/null`
-- Verify repository configuration: !`gh repo view --json name,owner,defaultBranchRef 2>/dev/null`
+- Current git status: !`git status`
+- Current git diff (staged and unstaged changes): !`git diff HEAD`
+- Current branch: !`git branch --show-current`
+- Recent commits: !`git log --oneline -10`
 
 # Workflow
 
-## 1. Identify Target PR
+You are a git commit specialist tasked with creating clean, atomic commits that accurately represent the work completed in this session.
 
-Ask user which PR to describe if multiple options exist, or confirm creating a new PR if none exists on current branch.
+## Pre-Commit Checks
 
-## 2. If the PR exists, gather PR context
+1. **Verify repository state:**
 
-```bash
-# Get changes
-gh pr diff {number}
+   ```bash
+   git status
+   git branch --show-current
+   ```
 
-# Get commit history
-gh pr view {number} --json commits
+   - Confirm current branch (warn if on main/master)
+   - Check for merge conflicts
+   - Note any untracked files
+
+2. **Review changes thoroughly:**
+   ```bash
+   git diff --stat  # Overview of changed files
+   git diff         # Detailed changes
+   ```
+   - Understand what was modified and why
+   - Identify logical groupings for commits
+
+## Commit Planning
+
+### Analyze Changes
+
+Group related changes by:
+
+- **Feature boundaries** - Changes that implement a single feature
+- **File relationships** - Files that depend on each other
+- **Change types** - Separate refactoring from new features
+- **Risk levels** - Isolate breaking changes
+
+### Commit Message Format
+
+Use conventional commits when appropriate:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
 ```
 
-**If repository not set:** User must run `gh repo set-default`
+**Types:**
 
-## 3. Analyze Changes
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `refactor`: Code refactoring
+- `test`: Test additions/changes
+- `chore`: Maintenance tasks
+- `perf`: Performance improvements
 
-- Identify change categories:
-  - Features added
-  - Bugs fixed
-  - Breaking changes
-  - Performance improvements
-  - Refactoring
-- Note user-facing vs internal changes
-- Check for migration requirements
+**Example:**
 
-## 4. If the template exists, load template
+```
+feat(auth): add OAuth2 integration
 
-Use template if found in initial check, otherwise use standard format.
-
-## 5. Generate Description
-
-**With Template:** Fill each section based on analysis
-**Without Template:** Use format below:
-
-```markdown
-# Summary
-
-[One-line description of the change]
-
-## Problem
-
-[What issue or limitation does this address?]
-
-## Solution
-
-[How does this PR solve the problem?]
-
-# Changes
-
-## User-Facing Changes
-
-- [Changes visible to end users]
-
-## Technical Changes
-
-- [Internal implementation changes]
-
-## Type of Change
-
-- [ ] 🐛 Bug fix (non-breaking change fixing an issue)
-- [ ] ✨ New feature (non-breaking change adding functionality)
-- [ ] 💥 Breaking change (fix or feature causing existing functionality to break)
-- [ ] 📚 Documentation update
-- [ ] 🎨 Code refactoring
-- [ ] ⚡ Performance improvement
-- [ ] 🔒 Security fix
-
-## Testing
-
-- [ ] Tests pass locally
-- [ ] Added tests for new functionality
-- [ ] Existing tests updated
-
-## Manual Checks
-
-[If needed, list any manual checks required for the PR. Otherwise, leave Manual Checks section out of description]
-
-## Breaking Changes
-
-[List any breaking changes. If none, leave Breaking Changes section out of description]
-
-## Screenshots
-
-[If UI changes, add before/after. If none, leave Screenshots section out of description]
-
-## Additional Notes
-
-[Context, decisions, or follow-up needed]
+- Implement Google OAuth provider
+- Add token refresh mechanism
+- Update user model with OAuth fields
 ```
 
-## 6. Run Automated Checks (if configured)
+## Execution Workflow
 
-```bash
-# Common verification commands
-npm test
-cargo test
-go test ./...
-pytest
-make test
-just test
+1. **Present commit plan:**
+
+   ```markdown
+   ## Proposed Commits
+
+   ### Commit 1: [Type] [Description]
+
+   Files:
+
+   - path/to/file1.js
+   - path/to/file2.js
+
+   Message:
+   ```
+
+   [commit message]
+
+   ```
+
+   ### Commit 2: [Type] [Description]
+   Files:
+   - path/to/file3.md
+
+   Message:
+   ```
+
+   [commit message]
+
+   ```
+
+   Proceed with these 2 commits? (yes/no/edit)
+   ```
+
+2. **Handle user response:**
+
+   - **yes**: Execute as planned
+   - **no**: Cancel and ask for guidance
+   - **edit**: Allow message/grouping adjustments
+
+3. **Execute commits:**
+
+   ```bash
+   # For each commit:
+   git add [specific files]
+   git commit -m "[message]"
+   ```
+
+4. **Verify results:**
+   ```bash
+   git log --oneline -5
+   git status
+   ```
+
+## Critical Rules
+
+### ALWAYS:
+
+✅ Use specific file paths with `git add`  
+✅ Review diff before committing  
+✅ Write clear, descriptive messages  
+✅ Group related changes together  
+✅ Check branch before committing
+
+### NEVER:
+
+❌ Use `git add -A` or `git add .`  
+❌ Include Claude attribution or co-author info  
+❌ Commit sensitive files (.env, secrets)  
+❌ Mix unrelated changes in one commit  
+❌ Commit directly to main without confirmation
+
+## Edge Case Handling
+
+### Large Files
+
+If files > 100MB detected:
+
+```
+Warning: Large file detected (path/to/file - 150MB)
+GitHub has a 100MB file size limit. Options:
+1. Add to .gitignore
+2. Use Git LFS
+3. Exclude from commit
 ```
 
-Mark completed checks: `- [x]`
+### Sensitive Data
 
-## 7. Create or Update PR
+Check for common sensitive patterns:
 
-```bash
-# Save description
-echo "[description]" > pr_description.md
+- Files: `.env`, `*.key`, `*.pem`, `credentials.*`
+- Content: API keys, passwords, tokens
 
-# Update existing PR
-gh pr edit {number} --body-file pr_description.md
+If detected:
 
-# OR create new PR
-gh pr create --body-file pr_description.md --title "[title]" --base [base-branch]
-
-# Confirm update
-gh pr view {number}
-
-# Remove temporary description file
-rm pr_description.md
+```
+⚠️ Potential sensitive data detected in [file]
+Please confirm this should be committed (yes/no)
 ```
 
-## Key Principles
+### Empty Commits
 
-**DO:**
+If no changes staged:
 
-- ✅ Focus on WHY changes were made
-- ✅ Highlight user impact first
-- ✅ Group related changes
-- ✅ Run automated tests when possible
-- ✅ Note migration steps clearly
+```
+No changes to commit. Would you like to:
+1. Review unstaged changes
+2. Check untracked files
+3. Cancel
+```
 
-**DON'T:**
+## Commit Message Best Practices
 
-- ❌ List every file changed
-- ❌ Duplicate commit messages
-- ❌ Skip breaking change warnings
-- ❌ Leave template sections empty
-- ❌ Include "Generated by Claude" or similar attribution
+### Good Examples:
 
-## Repository Variations
+```
+feat: add user authentication system
 
-| Template Location                  | Fallback Order      |
-| ---------------------------------- | ------------------- |
-| `.github/pull_request_template.md` | Primary             |
-| `.github/PULL_REQUEST_TEMPLATE.md` | Alternative         |
-| `docs/pull_request_template.md`    | Legacy              |
-| None found                         | Use standard format |
+fix: resolve memory leak in data processor
 
-## Common Sections to Address
+refactor: extract validation logic to separate module
 
-- **Problem/Solution** - What issue does this resolve?
-- **Implementation** - How was it solved?
-- **Testing** - How was it verified?
-- **Impact** - Who/what is affected?
-- **Follow-up** - What comes next?
+docs: update API documentation with new endpoints
+```
 
-Remember: Good PR descriptions accelerate reviews. Be thorough but scannable and concise.
+### Poor Examples:
+
+```
+"fixed stuff"           # Too vague
+"EMERGENCY FIX!!!"      # Unclear, emotional
+"wip"                   # Non-descriptive
+"changes"               # No context
+```
+
+## Branch-Specific Behavior
+
+| Branch      | Action                        |
+| ----------- | ----------------------------- |
+| main/master | Require explicit confirmation |
+| develop/dev | Standard flow                 |
+| feature/\*  | Standard flow                 |
+| hotfix/\*   | Suggest single commit         |
+
+## Post-Commit Options
+
+After successful commits:
+
+```
+✓ Created 2 commits successfully
+
+Options:
+1. Push to remote (git push)
+2. View full log (git log)
+3. Continue working
+```
+
+Remember: You have full context of this session. Create commits that tell the story of what was accomplished, not just what changed.
