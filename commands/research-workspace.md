@@ -1,20 +1,15 @@
 ---
 description: Conduct comprehensive workspace research by spawning parallel sub-agents to investigate all aspects of a query, iteratively exploring discoveries, and synthesizing findings into detailed research documents
-allowed-tools: Bash(pwd), Bash(mkdir -p ./research), Bash(date:*), Bash(git config:*), Bash(git rev-parse:*), Bash(git branch:*), Bash(gh repo view:*), Bash(basename:*), Bash(git status)
+allowed-tools: Bash(~/.claude/scripts/get-workspace-metadata.sh), Bash(mkdir -p ./research), Bash(git status)
 argument-hint: [User query to be researched]
 ---
 
 # Initial Context
 
-- Current Workspace Directory: !`pwd`
-- Ensure the `research` directory exists: !`mkdir -p ./research`
-- Current date/time (ISO format): !`date +"%Y-%m-%dT%H:%M:%S%z"`
-- Current date/time (filename format): !`date +"%Y-%m-%dT%H:%M"`
-- Researcher name: !`git config user.name`
-- Current git commit: !`git rev-parse HEAD`
-- Current branch: !`git branch --show-current`
-- Repository name: !`gh repo view --json name -q .name 2>/dev/null || basename "$PWD"`
-- User query: $ARGUMENTS
+Get workspace metadata: !`~/.claude/scripts/get-workspace-metadata.sh`
+
+Ensure the `research` directory exists: !`mkdir -p ./research`
+User query: $ARGUMENTS
 
 # Research Workspace
 
@@ -171,9 +166,9 @@ Task(title="Research X", agent="web-search-researcher",
 
    **Filename Format:**
 
-   - Use the "Current date/time (filename format)" from Initial Context
-   - With ticket: `research/[filename format]-XXXX-topic.md`
-   - Without ticket: `research/[filename format]-topic.md`
+   - Use the "DATETIME_FILENAME" from Initial Context
+   - With ticket: `research/[DATETIME_FILENAME]-XXXX-topic.md`
+   - Without ticket: `research/[DATETIME_FILENAME]-topic.md`
    - Where `topic` is a two to three word description of the user query
    - Example: `research/2025-10-01T14:30-1234-auth-flow.md`
 
@@ -181,21 +176,21 @@ Task(title="Research X", agent="web-search-researcher",
 
    ```markdown
    ---
-   date: [Current date/time (ISO format) from Initial Context]
-   researcher: [Researcher name from Initial Context]
-   git_commit: [Current git commit from Initial Context]
-   branch: [Current branch from Initial Context]
-   repository: [Repository name from Initial Context]
+   date: [DATETIME_ISO from Initial Context]
+   researcher: [RESEARCHER from Initial Context]
+   git_commit: [GIT_COMMIT from Initial Context]
+   branch: [GIT_BRANCH from Initial Context]
+   repository: [REPO_NAME from Initial Context]
    topic: "[User's Question]"
    tags: [research, component-names]
    status: complete
-   last_updated: [Current date/time (ISO format) from Initial Context]
-   last_updated_by: [Researcher name from Initial Context]
+   last_updated: [DATETIME_ISO from Initial Context]
+   last_updated_by: [RESEARCHER from Initial Context]
    ---
 
    # Research: [User's Question]
 
-   **Metadata:** [Current date/time (ISO format)] | [Current branch]@[Current git commit] | [Researcher name]
+   **Metadata:** [DATETIME_ISO] | [GIT_BRANCH]@[GIT_COMMIT] | [RESEARCHER]
 
    ## Research Question
 
@@ -276,13 +271,13 @@ For additional questions on the same topic:
 
    - Update frontmatter:
      - **DO NOT CHANGE** `date`: Keep original research date
-     - `last_updated`: Current date/time (ISO format) from Initial Context
-     - `last_updated_by`: Researcher name from Initial Context
+     - `last_updated`: Current DATETIME_ISO from Initial Context
+     - `last_updated_by`: RESEARCHER from Initial Context
      - `last_updated_note`: "Added follow-up research for [brief description]"
 
 2. **Append new section**
 
-   - Add: `## Follow-up Research [Current date/time (ISO format)]`
+   - Add: `## Follow-up Research [Current DATETIME_ISO]`
    - Include the follow-up question
    - Add new findings
 
