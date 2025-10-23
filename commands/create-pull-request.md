@@ -140,21 +140,17 @@ feat(auth): add OAuth2 integration
 
 ## Critical Rules
 
-### ALWAYS:
-
 ✅ Use specific file paths with `git add`  
 ✅ Review diff before committing  
 ✅ Write clear, descriptive messages  
 ✅ Group related changes together  
 ✅ Check branch before committing
 
-### NEVER:
-
-❌ Use `git add -A` or `git add .`  
-❌ Include Claude attribution or co-author info  
-❌ Commit sensitive files (.env, secrets)  
-❌ Mix unrelated changes in one commit  
-❌ Commit directly to main without confirmation
+❌ DO NOT use `git add -A` or `git add .`  
+❌ DO NOT include Claude attribution or co-author info
+❌ DO NOT commit sensitive files (.env, secrets)  
+❌ DO NOT mix unrelated changes in one commit  
+❌ DO NOT commit directly to main without confirmation
 
 ## Edge Case Handling
 
