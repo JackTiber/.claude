@@ -1,7 +1,7 @@
 ---
-description: Create well-structured git commits by analyzing changes, grouping related files, and generating conventional commit messages with safety checks for sensitive data and branch protection.
-allowed-tools: Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git add:*), Bash(git commit:*)
-argument-hint: [message]
+description: Create a well-structured GitHub pull request by analyzing all branch commits, generating a descriptive title and body, and opening the PR with gh CLI.
+allowed-tools: Bash(git branch:*), Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git rev-parse:*), Bash(git remote:*), Bash(git push:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh pr list:*)
+argument-hint: [base-branch]
 ---
 
 # Arguments
@@ -10,230 +10,151 @@ Review any provided details as arguments for this slash command first: $ARGUMENT
 
 # Context
 
-- Current git status: !`git status`
-- Current git diff (staged and unstaged changes): !`git diff HEAD`
 - Current branch: !`git branch --show-current`
-- Recent commits: !`git log --oneline -10`
+- Current git status: !`git status --short`
+- Remote tracking: !`git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "no upstream"`
+- Default branch: !`git remote show origin 2>/dev/null | grep 'HEAD branch' | awk '{print $NF}' || echo "main"`
 
-# Workflow
+# Create Pull Request
 
-You are a git commit specialist tasked with creating clean, atomic commits that accurately represent the work completed in this session.
+You are a pull request specialist. Your job is to create well-structured GitHub pull requests that clearly communicate the purpose and scope of changes.
 
-## Pre-Commit Checks
+## Pre-Flight Checks
 
-1. **Verify repository state:**
+1. **Verify branch state:**
+   - Confirm NOT on main/master. If so, STOP and warn the user.
+   - Check for uncommitted changes. If any, warn the user and suggest committing first.
+   - Determine the base branch (argument > default branch from remote).
 
+2. **Gather branch context:**
    ```bash
-   git status
-   git branch --show-current
+   # All commits on this branch vs base
+   git log --oneline <base-branch>..HEAD
+
+   # Full diff against base
+   git diff <base-branch>...HEAD --stat
    ```
 
-   - Confirm current branch (warn if on main/master)
-   - Check for merge conflicts
-   - Note any untracked files
+## Analysis
 
-2. **Review changes thoroughly:**
-   ```bash
-   git diff --stat  # Overview of changed files
-   git diff         # Detailed changes
-   ```
-   - Understand what was modified and why
-   - Identify logical groupings for commits
+### Review ALL Commits
 
-## Commit Planning
+Analyze **every** commit on the branch, not just the latest:
 
-### Analyze Changes
-
-Group related changes by:
-
-- **Feature boundaries** - Changes that implement a single feature
-- **File relationships** - Files that depend on each other
-- **Change types** - Separate refactoring from new features
-- **Risk levels** - Isolate breaking changes
-
-### Commit Message Format
-
-Use conventional commits when appropriate:
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
+```bash
+git log <base-branch>..HEAD --format="%h %s"
+git diff <base-branch>...HEAD
 ```
 
-**Types:**
+Understand:
+- **What changed** - Files modified, added, removed
+- **Why it changed** - Feature, fix, refactor, etc.
+- **Scope** - How many areas of the codebase are touched
 
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `refactor`: Code refactoring
-- `test`: Test additions/changes
-- `chore`: Maintenance tasks
-- `perf`: Performance improvements
+### Determine PR Metadata
 
-**Example:**
+- **Type**: Feature, Bug Fix, Refactor, Docs, Chore, etc.
+- **Breaking changes**: Any backward-incompatible changes?
+- **Dependencies**: New packages or version changes?
 
-```
-feat(auth): add OAuth2 integration
+## PR Content Generation
 
-- Implement Google OAuth provider
-- Add token refresh mechanism
-- Update user model with OAuth fields
+### Title
+
+- Under 70 characters
+- Use imperative mood: "Add...", "Fix...", "Update..."
+- Include scope if helpful: "feat(auth): add OAuth2 support"
+- Do NOT include PR number or branch name
+
+### Body
+
+Use this structure:
+
+```markdown
+## Summary
+- Bullet point overview of what this PR does (1-3 bullets)
+
+## Changes
+- Specific changes grouped logically
+- Reference file paths where helpful
+
+## Test Plan
+- [ ] How to verify these changes work
+- [ ] Edge cases considered
+
+## Notes
+- Any additional context, trade-offs, or follow-up items
 ```
 
 ## Execution Workflow
 
-1. **Present commit plan:**
-
-   ```markdown
-   ## Proposed Commits
-
-   ### Commit 1: [Type] [Description]
-
-   Files:
-
-   - path/to/file1.js
-   - path/to/file2.js
-
-   Message:
+1. **Present PR plan:**
    ```
+   ## Proposed Pull Request
 
-   [commit message]
+   Base: main <- Branch: feature/xyz
+   Commits: 5
 
-   ```
+   Title: Add OAuth2 authentication support
 
-   ### Commit 2: [Type] [Description]
-   Files:
-   - path/to/file3.md
+   Body:
+   [generated body]
 
-   Message:
-   ```
-
-   [commit message]
-
-   ```
-
-   Proceed with these 2 commits? (yes/no/edit)
+   Proceed? (yes/no/edit)
    ```
 
 2. **Handle user response:**
-
    - **yes**: Execute as planned
    - **no**: Cancel and ask for guidance
-   - **edit**: Allow message/grouping adjustments
+   - **edit**: Allow title/body adjustments
 
-3. **Execute commits:**
-
+3. **Push and create PR:**
    ```bash
-   # For each commit:
-   git add [specific files]
-   git commit -m "[message]"
+   # Push branch if needed
+   git push -u origin <current-branch>
+
+   # Create PR
+   gh pr create --title "..." --body "..."
    ```
 
-4. **Verify results:**
-   ```bash
-   git log --oneline -5
-   git status
+4. **Return result:**
+   ```
+   ✓ Pull request created successfully
+
+   Title: Add OAuth2 authentication support
+   URL: https://github.com/owner/repo/pull/42
+   Base: main <- Branch: feature/xyz
    ```
 
 ## Critical Rules
 
-✅ Use specific file paths with `git add`  
-✅ Review diff before committing  
-✅ Write clear, descriptive messages  
-✅ Group related changes together  
-✅ Check branch before committing
+- Analyze ALL commits on the branch, not just staged changes
+- Keep title under 70 characters
+- Use the body for details, not the title
+- Always confirm the base branch with the user if ambiguous
+- Push the branch before creating the PR
+- Return the PR URL when done
 
-❌ DO NOT use `git add -A` or `git add .`  
-❌ DO NOT include Claude attribution or co-author info
-❌ DO NOT commit sensitive files (.env, secrets)  
-❌ DO NOT mix unrelated changes in one commit  
-❌ DO NOT commit directly to main without confirmation
+## Edge Cases
 
-## Edge Case Handling
-
-### Large Files
-
-If files > 100MB detected:
+### No Commits on Branch
 
 ```
-Warning: Large file detected (path/to/file - 150MB)
-GitHub has a 100MB file size limit. Options:
-1. Add to .gitignore
-2. Use Git LFS
-3. Exclude from commit
+No commits found between <base> and HEAD.
+Nothing to create a PR for.
 ```
 
-### Sensitive Data
+### Branch Already Has a PR
 
-Check for common sensitive patterns:
-
-- Files: `.env`, `*.key`, `*.pem`, `credentials.*`
-- Content: API keys, passwords, tokens
-
-If detected:
-
-```
-⚠️ Potential sensitive data detected in [file]
-Please confirm this should be committed (yes/no)
+```bash
+gh pr list --head <current-branch>
 ```
 
-### Empty Commits
+If a PR exists, show it and ask if the user wants to update it or create a new one.
 
-If no changes staged:
+### No Remote Tracking
 
+If the branch hasn't been pushed:
 ```
-No changes to commit. Would you like to:
-1. Review unstaged changes
-2. Check untracked files
-3. Cancel
+Branch has no upstream. Will push to origin/<branch-name> before creating PR.
 ```
-
-## Commit Message Best Practices
-
-### Good Examples:
-
-```
-feat: add user authentication system
-
-fix: resolve memory leak in data processor
-
-refactor: extract validation logic to separate module
-
-docs: update API documentation with new endpoints
-```
-
-### Poor Examples:
-
-```
-"fixed stuff"           # Too vague
-"EMERGENCY FIX!!!"      # Unclear, emotional
-"wip"                   # Non-descriptive
-"changes"               # No context
-```
-
-## Branch-Specific Behavior
-
-| Branch      | Action                        |
-| ----------- | ----------------------------- |
-| main/master | Require explicit confirmation |
-| develop/dev | Standard flow                 |
-| feature/\*  | Standard flow                 |
-| hotfix/\*   | Suggest single commit         |
-
-## Post-Commit Options
-
-After successful commits:
-
-```
-✓ Created 2 commits successfully
-
-Options:
-1. Push to remote (git push)
-2. View full log (git log)
-3. Continue working
-```
-
-Remember: You have full context of this session. Create commits that tell the story of what was accomplished, not just what changed.
