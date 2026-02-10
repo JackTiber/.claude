@@ -1,5 +1,15 @@
 import * as p from "@clack/prompts";
-import { existsSync, lstatSync, readlinkSync, renameSync, symlinkSync, unlinkSync, rmSync } from "fs";
+import {
+  existsSync,
+  lstatSync,
+  readlinkSync,
+  renameSync,
+  symlinkSync,
+  unlinkSync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+} from "fs";
 import { resolve, join, basename, dirname } from "path";
 import { homedir } from "os";
 
@@ -15,11 +25,44 @@ interface InstallItem {
   isDir: boolean;
 }
 
+type PlanType = "subscription" | "api";
+
+const MODEL_ENV: Record<PlanType, Record<string, string | null>> = {
+  subscription: {
+    ANTHROPIC_MODEL: null,
+    ANTHROPIC_SMALL_FAST_MODEL: null,
+  },
+  api: {
+    ANTHROPIC_MODEL: "global.anthropic.claude-opus-4-5-20251101-v1:0",
+    ANTHROPIC_SMALL_FAST_MODEL: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+  },
+};
+
 const INSTALL_ITEMS: InstallItem[] = [
-  { value: "commands", label: "commands/", hint: "Slash commands (create-commit, create-pull-request, research-workspace)", isDir: true },
-  { value: "agents", label: "agents/", hint: "Sub-agent definitions (8 agents)", isDir: true },
-  { value: "scripts", label: "scripts/", hint: "Utility scripts (context-monitor, workspace-metadata)", isDir: true },
-  { value: "settings.json", label: "settings.json", hint: "Permissions, hooks, env vars, statusline, plugins", isDir: false },
+  {
+    value: "commands",
+    label: "commands/",
+    hint: "Slash commands (create-commit, create-pull-request, research-workspace)",
+    isDir: true,
+  },
+  {
+    value: "agents",
+    label: "agents/",
+    hint: "Sub-agent definitions (8 agents)",
+    isDir: true,
+  },
+  {
+    value: "scripts",
+    label: "scripts/",
+    hint: "Utility scripts (status-line, workspace-metadata)",
+    isDir: true,
+  },
+  {
+    value: "settings.json",
+    label: "settings.json",
+    hint: "Permissions, hooks, env vars, statusline, plugins",
+    isDir: false,
+  },
 ];
 
 function isSymlinkTo(path: string, target: string): boolean {
@@ -55,6 +98,26 @@ function restoreBackup(path: string): boolean {
     return true;
   }
   return false;
+}
+
+function applyPlanToSettings(plan: PlanType): void {
+  const settingsPath = join(SOURCE_DIR, "settings.json");
+  const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
+  const env = settings.env ?? {};
+
+  for (const [key, value] of Object.entries(MODEL_ENV[plan])) {
+    if (value === null) {
+      delete env[key];
+    } else {
+      env[key] = value;
+    }
+  }
+
+  settings.env = env;
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + "\n");
+  p.log.success(
+    `Model settings updated for ${plan === "subscription" ? "subscription plan" : "API usage"}`,
+  );
 }
 
 function install(items: string[]): void {
@@ -151,6 +214,33 @@ async function main(): Promise<void> {
     }
 
     selected = result as string[];
+  }
+
+  if (selected.includes("settings.json")) {
+    const plan = doAll
+      ? "api"
+      : await p.select({
+          message: "How are you using Claude Code?",
+          options: [
+            {
+              value: "subscription",
+              label: "Subscription (Pro/Max)",
+              hint: "Uses built-in model defaults",
+            },
+            {
+              value: "api",
+              label: "API (Bedrock/Direct)",
+              hint: "Sets explicit model IDs in env",
+            },
+          ],
+        });
+
+    if (p.isCancel(plan)) {
+      p.cancel("Installation cancelled.");
+      process.exit(0);
+    }
+
+    applyPlanToSettings(plan as PlanType);
   }
 
   p.log.step("Installing...");

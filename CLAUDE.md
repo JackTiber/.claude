@@ -28,7 +28,7 @@ This is a Claude Code configuration repository containing custom slash commands,
 - **commands/**: Markdown files defining slash commands (e.g., `/create-commit`, `/create-pull-request`, `/research-workspace`)
 - **agents/**: Sub-agent definitions with specialized capabilities (codebase-locator, codebase-analyzer, etc.)
 - **installer/**: Bun/TypeScript interactive installer that symlinks config into `~/.claude/`
-- **scripts/**: Bash and Python utilities supporting slash commands
+- **scripts/**: Bash and Node.js utilities supporting slash commands and statusline
 
 ## Installation
 
@@ -101,10 +101,10 @@ Hooks are configured in `settings.json` and execute automatically during tool op
 - Used by slash commands for consistent metadata in generated files
 - Outputs environment variables: `WORKSPACE_DIR`, `DATETIME_ISO`, `DATETIME_FILENAME`, `RESEARCHER`, `GIT_COMMIT`, `GIT_BRANCH`, `REPO_NAME`, `IS_GIT`
 
-**context-monitor.py**
-- Real-time context usage monitoring for Claude Code sessions
-- Parses transcript files to display token usage and session metrics
-- Provides visual indicators for context consumption
+**status-line.mjs**
+- Custom HUD statusline for Claude Code sessions (no dependencies)
+- Shows context %, lines changed, session duration, running agents, todos, model info
+- Parses stdin JSON from Claude Code and transcript JSONL for live metrics
 
 ## Common Workflows
 
