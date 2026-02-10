@@ -31,10 +31,21 @@ const MODEL_ENV: Record<PlanType, Record<string, string | null>> = {
   subscription: {
     ANTHROPIC_MODEL: null,
     ANTHROPIC_SMALL_FAST_MODEL: null,
+    AWS_PROFILE: null,
   },
   api: {
     ANTHROPIC_MODEL: "global.anthropic.claude-opus-4-5-20251101-v1:0",
     ANTHROPIC_SMALL_FAST_MODEL: "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    AWS_PROFILE: "default",
+  },
+};
+
+const PLAN_TOP_LEVEL: Record<PlanType, Record<string, string | null>> = {
+  subscription: {
+    awsAuthRefresh: null,
+  },
+  api: {
+    awsAuthRefresh: "aws sso login --profile default",
   },
 };
 
@@ -110,6 +121,14 @@ function applyPlanToSettings(plan: PlanType): void {
       delete env[key];
     } else {
       env[key] = value;
+    }
+  }
+
+  for (const [key, value] of Object.entries(PLAN_TOP_LEVEL[plan])) {
+    if (value === null) {
+      delete settings[key];
+    } else {
+      settings[key] = value;
     }
   }
 
