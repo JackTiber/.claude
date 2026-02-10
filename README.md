@@ -2,12 +2,30 @@
 
 Personal Claude Code workspace configuration with custom slash commands, specialized agents, and development workflows.
 
+## Installation
+
+```bash
+# Build the installer (requires Bun)
+cd installer && bun install && bun build --compile src/index.ts --outfile ../install
+
+# Interactive install
+./install
+
+# Install everything
+./install --all
+
+# Uninstall (removes symlinks, restores backups)
+./install --uninstall
+```
+
+The installer symlinks `commands/`, `agents/`, `scripts/`, and `settings.json` into `~/.claude/`. Use `settings.local.json` for machine-specific overrides.
+
 ## What's Inside
 
 ### Slash Commands (`commands/`)
 Custom workflows invoked with `/command-name`:
 - `/create-commit` - Structured git commits with conventional commit format
-- `/create-pull-request` - PR creation with automated summaries
+- `/create-pull-request` - GitHub PR creation via `gh` CLI with structured summaries
 - `/research-workspace` - Comprehensive codebase research with parallel sub-agents
 
 ### Specialized Agents (`agents/`)
@@ -21,23 +39,23 @@ Sub-agents for specific tasks:
 - **database-admin** - Database operations
 - **ui-ux-designer** - UI/UX design work
 
-### Hooks (`hooks/`)
+### Hooks (`settings.json`)
 Automatic code formatting on write/edit operations:
-- TypeScript, JavaScript, Python formatters
+- TypeScript, JavaScript (prettier), Python (ruff), Go (gofmt), Rust (rustfmt)
+- Sensitive file edit warnings (`.env`, `.key`, `.pem`, etc.)
+- Uncommitted changes reminder on session end
 
 ### Scripts (`scripts/`)
 Utility scripts supporting slash commands:
 - `get-workspace-metadata.sh` - Extract git and workspace context
 - `context-monitor.py` - Real-time context usage monitoring
 
-### MCP Integration (`mcp/`)
-Documentation for MCP server integrations (databases, search, dev tools, etc.)
-
 ## Usage
 
 Slash commands automatically expand when invoked in Claude Code:
 ```bash
 /create-commit "implemented auth flow"
+/create-pull-request main
 /research-workspace "how does authentication work?"
 ```
 
@@ -47,11 +65,13 @@ Sub-agents are spawned automatically by commands like `/research-workspace` for 
 
 ```
 .claude/
-├── commands/     # Slash command definitions
-├── agents/       # Sub-agent configurations
-├── hooks/        # Formatting hooks
-├── scripts/      # Utility scripts
-└── mcp/          # MCP server docs
+├── agents/        # Sub-agent configurations
+├── commands/      # Slash command definitions
+├── installer/     # Install tool source (Bun/TypeScript)
+├── scripts/       # Utility scripts
+├── settings.json  # Permissions, hooks, env, statusline, plugins
+├── CLAUDE.md      # Architecture guide
+└── README.md
 ```
 
 See [CLAUDE.md](CLAUDE.md) for detailed architecture and conventions.

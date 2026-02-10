@@ -183,6 +183,61 @@
             "Bash(date:*)",
             "Bash(nc -zv:*)",
             "Bash(nc -z:*)",
+            "Bash(go build:*)",
+            "Bash(go test:*)",
+            "Bash(go run:*)",
+            "Bash(go vet:*)",
+            "Bash(go mod:*)",
+            "Bash(go fmt:*)",
+            "Bash(go doc:*)",
+            "Bash(go version:*)",
+            "Bash(go env:*)",
+            "Bash(go list:*)",
+            "Bash(golangci-lint:*)",
+            "Bash(cargo build:*)",
+            "Bash(cargo test:*)",
+            "Bash(cargo run:*)",
+            "Bash(cargo check:*)",
+            "Bash(cargo clippy:*)",
+            "Bash(cargo fmt:*)",
+            "Bash(cargo doc:*)",
+            "Bash(cargo bench:*)",
+            "Bash(cargo tree:*)",
+            "Bash(rustc --version:*)",
+            "Bash(rustup show:*)",
+            "Bash(uv run:*)",
+            "Bash(uv pip list:*)",
+            "Bash(uv pip show:*)",
+            "Bash(uv sync:*)",
+            "Bash(uv lock:*)",
+            "Bash(uv tree:*)",
+            "Bash(uv version:*)",
+            "Bash(uvx:*)",
+            "Bash(bun run:*)",
+            "Bash(bun test:*)",
+            "Bash(bun build:*)",
+            "Bash(bun install:*)",
+            "Bash(bun add:*)",
+            "Bash(bun remove:*)",
+            "Bash(bun update:*)",
+            "Bash(bun outdated:*)",
+            "Bash(bun pm ls:*)",
+            "Bash(bun pm cache:*)",
+            "Bash(bunx:*)",
+            "Bash(bun --version:*)",
+            "Bash(aws sts get-caller-identity:*)",
+            "Bash(aws s3 ls:*)",
+            "Bash(aws ec2 describe:*)",
+            "Bash(aws ecs describe:*)",
+            "Bash(aws ecs list:*)",
+            "Bash(aws lambda list:*)",
+            "Bash(aws lambda get:*)",
+            "Bash(aws cloudformation describe:*)",
+            "Bash(aws cloudformation list:*)",
+            "Bash(aws logs describe:*)",
+            "Bash(aws logs get:*)",
+            "Bash(aws iam list:*)",
+            "Bash(aws iam get:*)",
             "Read(**/*.json)",
             "Read(**/*.js)",
             "Read(**/*.jsx)",
@@ -282,6 +337,17 @@
         ]
     },
     "hooks": {
+        "PreToolUse": [
+            {
+                "matcher": "Edit|MultiEdit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "jq -r '.tool_input.file_path' | { read file_path; if echo \"$file_path\" | grep -qiE '(\\.env|\\.key|\\.pem|secret|credential)'; then echo 'WARNING: Editing sensitive file' >&2; fi; }"
+                    }
+                ]
+            }
+        ],
         "PostToolUse": [
             {
                 "matcher": "Edit|MultiEdit|Write",
@@ -298,6 +364,35 @@
                     {
                         "type": "command",
                         "command": "jq -r '.tool_input.file_path' | { read file_path; if echo \"$file_path\" | grep -q '\\.py$'; then uvx ruff format \"$file_path\"; fi; }"
+                    }
+                ]
+            },
+            {
+                "matcher": "Edit|MultiEdit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "jq -r \".tool_input.file_path\" | { read fp; if echo \"$fp\" | grep -q \"\\.go$\"; then gofmt -w \"$fp\"; fi; }"
+                    }
+                ]
+            },
+            {
+                "matcher": "Edit|MultiEdit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "jq -r \".tool_input.file_path\" | { read fp; if echo \"$fp\" | grep -q \"\\.rs$\"; then rustfmt \"$fp\" 2>/dev/null; fi; }"
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
+                "matcher": "",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then c=$(git status --porcelain 2>/dev/null | head -5); if [ -n \"$c\" ]; then echo \"Reminder: You have uncommitted changes\" >&2; fi; fi"
                     }
                 ]
             }
