@@ -1,0 +1,38 @@
+# Claude Code runtime directories
+cache/
+chrome/
+debug/
+downloads/
+file-history/
+hud/
+ide/
+paste-cache/
+plans/
+plugins/
+projects/
+session-env/
+shell-snapshots/
+skills/
+statsig/
+tasks/
+telemetry/
+todos/
+
+# Claude Code runtime files
+history.jsonl
+stats-cache.json
+.credentials.json
+settings.local.json
+statusline-command.sh
+*.log
+
+# Research output
+research/
+
+# OS files
+.DS_Store
+
+# Installer build artifacts
+/install
+installer/node_modules/
+installer/bun.lock
