@@ -7,7 +7,8 @@
     "BASH_MAX_TIMEOUT_MS": "600000",
     "BASH_MAX_OUTPUT_LENGTH": "100000",
     "ANTHROPIC_MODEL": "us.anthropic.claude-opus-4-6-v1",
-    "ANTHROPIC_SMALL_FAST_MODEL": "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    "ANTHROPIC_SMALL_FAST_MODEL": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "AWS_PROFILE": "default"
   },
   "includeCoAuthoredBy": false,
   "permissions": {
@@ -271,5 +272,6 @@
     "playground@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
-  "promptSuggestionEnabled": false
+  "promptSuggestionEnabled": false,
+  "awsAuthRefresh": "aws sso login --profile default"
 }
