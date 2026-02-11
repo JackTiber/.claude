@@ -94,6 +94,20 @@ Hooks are configured in `settings.json` and execute automatically during tool op
 | PostToolUse (Edit/Write) | After edits | Auto-format Rust (rustfmt) |
 | Stop | Session end | Remind about uncommitted changes |
 
+### Permissions
+
+Permissions use a three-tier system configured in `settings.json`:
+
+| Tier | Behavior | Use case |
+|------|----------|----------|
+| `allow` | Auto-approved, no prompt | Safe read-only commands, build/test tools |
+| `ask` | Prompts user for approval | Destructive but sometimes legitimate operations |
+| `deny` | Hard block, cannot run | Always-dangerous operations |
+
+Rules are evaluated in order: `deny -> ask -> allow`. First match wins.
+
+**Strategy:** Broad tool allows (e.g., `Bash(git *)`) with specific `ask` rules for destructive variants (e.g., `Bash(git push --force *)`). Tools that execute arbitrary code (`node`, `python`, `go run`, `cargo run`, `uv run`, `bun run`) are not in `allow` — they fall to default Bash prompting. Infrastructure tools (`kubectl`, `helm`, `terraform`, `aws`) use explicit read-only allows.
+
 ### Scripts
 
 **get-workspace-metadata.sh**
@@ -188,4 +202,4 @@ All configuration files use:
 - Scripts are utilities supporting slash command functionality
 - Changes here affect Claude Code behavior across all projects
 - The `/research-workspace` command uses parallel sub-agents extensively for efficiency
-- Permissions cover Go, Rust, Python (uv), Bun, and read-only AWS CLI in addition to Node/Docker/K8s
+- Permissions use a three-tier allow/ask/deny system — see Permissions section above

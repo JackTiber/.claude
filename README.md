@@ -48,7 +48,7 @@ Automatic code formatting on write/edit operations:
 ### Scripts (`scripts/`)
 Utility scripts supporting slash commands:
 - `get-workspace-metadata.sh` - Extract git and workspace context
-- `context-monitor.py` - Real-time context usage monitoring
+- `status-line.mjs` - Custom HUD statusline for Claude Code sessions
 
 ## Usage
 
