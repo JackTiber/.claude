@@ -171,6 +171,8 @@ git log --oneline -10
 
 Never chain Bash commands with `&&`, `||`, or `;`. Each command must be a separate Bash tool call so that permission patterns (e.g., `Bash(git *)`) match correctly. Chained commands bypass auto-approval and require manual confirmation.
 
+Never use heredocs or command substitution (`$(...)`) inside Bash commands. For git commit messages, pass the message directly with `-m "message"` — do not use `$(cat <<'EOF'...)`. Subshell expressions break permission pattern matching.
+
 ### Commit Messages
 
 Follow conventional commits format:
