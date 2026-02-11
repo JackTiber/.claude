@@ -167,6 +167,10 @@ git log --oneline -10
 
 ## Conventions
 
+### Bash Commands
+
+Never chain Bash commands with `&&`, `||`, or `;`. Each command must be a separate Bash tool call so that permission patterns (e.g., `Bash(git *)`) match correctly. Chained commands bypass auto-approval and require manual confirmation.
+
 ### Commit Messages
 
 Follow conventional commits format:
