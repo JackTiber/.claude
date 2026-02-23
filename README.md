@@ -1,6 +1,6 @@
 # Claude Code Configuration
 
-Personal Claude Code workspace configuration with custom slash commands, specialized agents, and development workflows.
+Claude Code workspace configuration with custom slash commands, specialized agents, and development workflows.
 
 ## Installation
 
